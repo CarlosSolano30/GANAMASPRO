@@ -1,22 +1,27 @@
-from flask import Blueprint, request, jsonify, current_app
-from utils.validar_token import verificar_token
+from flask import Blueprint, jsonify
+from pymongo import MongoClient
+from utils.validar_token import validar_token
+import os
 
-bp = Blueprint("referidos", __name__)
+bp_referidos = Blueprint('referidos', __name__)
+client = MongoClient(os.getenv("MONGO_URI"))
+db = client.ganaplus
+usuarios = db.usuarios
 
-@bp.route("/", methods=["GET"])
-def obtener_referidos():
-    db = current_app.config["DB"]
-    token = request.headers.get("Authorization")
-    correo = verificar_token(token)
-
-    if not correo:
-        return jsonify({"error": "Token inválido"}), 401
-
-    usuario = db.usuarios.find_one({"correo": correo})
-    if not usuario:
+@bp_referidos.route("/api/referidos", methods=["GET"])
+@validar_token
+def obtener_referidos(usuario_actual):
+    user = usuarios.find_one({"correo": usuario_actual["correo"]})
+    if not user:
         return jsonify({"error": "Usuario no encontrado"}), 404
 
-    return jsonify({
-        "referidos": usuario.get("referidos", []),
-        "ganancia_referidos": usuario.get("saldo", 0)
-    })
+    referidos = usuarios.find({"referido_por": user["correo"]})
+    lista = []
+    for r in referidos:
+        lista.append({
+            "nombre": r["nombre"],
+            "correo": r["correo"],
+            "tareas_completadas": r.get("tareas_completadas", 0)
+        })
+
+    return jsonify({"referidos": lista})

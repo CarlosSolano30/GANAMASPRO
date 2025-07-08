@@ -7,6 +7,15 @@ import routes.tareas as tareas_routes
 import routes.referidos as referidos_routes
 import routes.retiros as retiros_routes
 import routes.admin as admin_routes
+from routes.usuario import bp_usuario
+app.register_blueprint(bp_usuario)
+from routes.referidos import bp_referidos
+app.register_blueprint(bp_referidos)
+from routes.retiros import bp_retiros
+app.register_blueprint(bp_retiros)
+from routes.tareas import bp_tareas
+app.register_blueprint(bp_tareas)
+
 
 app = Flask(__name__)
 CORS(app)
